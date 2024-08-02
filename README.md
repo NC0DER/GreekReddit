@@ -3,6 +3,8 @@
 [![Software-License](https://img.shields.io/badge/License-Apache--2.0-green)](https://github.com/NC0DER/LMRank/blob/main/LICENSE)
 
 # GreekReddit
+<img src="Greek Reddit icon.svg" width="200"/>  
+
 This repository hosts code for the upcoming article:
 * [Mastrokostas, C., Giarelis, N., & Karacapilidis, N. (2024). Social Media Topic Classification on Greek Reddit]()
 
