@@ -1,11 +1,15 @@
 import os
 import sys
 import numpy
+import pandas
+import seaborn
+import matplotlib.pyplot as plt
 
 from tqdm import tqdm
 from utils import (
     load_models, 
-    lowercase_and_remove_accents
+    lowercase_and_remove_accents,
+    rename_category_for_plot
 )
 from datasets import load_dataset
 from typing import TypeVar, Dict
@@ -19,8 +23,9 @@ from transformers import (
 from sklearn.metrics import (
     accuracy_score,
     hamming_loss,
+    confusion_matrix,
     precision_recall_fscore_support
-) 
+)
 
 # Generic type class for model and dataset objects.
 Model = TypeVar('Model')
@@ -74,8 +79,6 @@ def train_model(train_dataset: HFDataset, val_dataset: HFDataset,
         batched = True,
         remove_columns = ['text']
     )
-
-    #example = tokenized_train_dataset[0]
 
     tokenized_val_dataset = val_dataset.map(
         preprocess_function, 
@@ -223,6 +226,9 @@ def run_experiments(dataset_dir, model_local_path, results_path):
     id2label = {idx: label for idx, label in enumerate(labels)}
     label2id = {label: idx for idx, label in enumerate(labels)}
 
+    # Set the classification labels for the plots below.
+    plot_labels = list(map(rename_category_for_plot, sorted(labels)))
+
     # Set device.
     device = 'cpu'
 
@@ -270,7 +276,7 @@ def run_experiments(dataset_dir, model_local_path, results_path):
 
         # Predict the labels for the texts of the test dataset and evaluate them using the true labels.
         y_pred = [result['label'] for result in classifier(test_dataset['text'])]
-        y_test = test_dataset['label'] 
+        y_test = test_dataset['label']
 
         # Calculate macro averaged metrics and the hamming loss for the classifier.
         precision, recall, f1, _ = precision_recall_fscore_support(y_test, y_pred, average = 'macro', beta = 1.0)
@@ -281,6 +287,19 @@ def run_experiments(dataset_dir, model_local_path, results_path):
         recall_scores.append(recall)
         f1_scores.append(f1)
         loss_scores.append(h_loss)
+
+        # Calculate the confusion matrix.
+        cf_matrix = confusion_matrix(y_test, y_pred)
+
+        # Create a pandas dataframe from the confusion matrix.
+        df = pandas.DataFrame(cf_matrix, index = plot_labels, columns = plot_labels)
+
+        # Plot the dataframe as a heatmap, and save it in a file.
+        fig = plt.figure(figsize = (10, 7))
+        seaborn.heatmap(df, cmap = 'Blues', annot = True, fmt = 'd')
+        plot_path = f'images/cf_{f1}_GreekBERT_{str(i)}.svg'
+        plt.xticks(rotation = 35, ha = 'right')
+        fig.savefig(plot_path, dpi = fig.dpi, format = 'svg', bbox_inches = 'tight')
 
     # Calculate the mean and std evaluation scores.
     precision_mean = round(numpy.mean(precision_scores) * 100, 2)
@@ -314,7 +333,7 @@ def run_experiments(dataset_dir, model_local_path, results_path):
     return
 
 if __name__ == '__main__': run_experiments(
-    'Reddit/datasets', 
+    'datasets', 
     'models/epoch_4/greekbert_reddit',
     'greekbert_results_epoch_4.csv'
 )

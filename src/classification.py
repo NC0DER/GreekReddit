@@ -1,6 +1,8 @@
 import os
 import pandas
 import numpy
+import seaborn
+import matplotlib.pyplot as plt
 
 from tqdm import tqdm
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -16,12 +18,16 @@ from sklearn.linear_model import (
 
 from sklearn.metrics import (
     precision_recall_fscore_support,
-    hamming_loss
+    confusion_matrix,
+    hamming_loss,
 )
 from scipy.stats import wilcoxon
 
-from utils import greek_stopwords, lowercase_and_remove_accents
-
+from utils import (
+    greek_stopwords, 
+    lowercase_and_remove_accents, 
+    rename_category_for_plot
+)
 
 def train_evaluate_classifiers(dataset_dir, vectorization_method):
     """
@@ -36,6 +42,10 @@ def train_evaluate_classifiers(dataset_dir, vectorization_method):
         0, 1, 42, 5, 11, 10, 67, 45, 23, 20, 
         88, 92, 53, 31, 13, 2, 55, 3, 39, 72
     ]
+
+    # Set the classification labels for the plots below.
+    labels = ['κοινωνία', 'εκπαίδευση', 'ψυχαγωγία/κουλτούρα', 'πολιτική', 'τεχνολογία/επιστήμη', 'οικονομία', 'ταξίδια', 'αθλητικά', 'φαγητό', 'ιστορία']
+    plot_labels = list(map(rename_category_for_plot, sorted(labels)))
 
     # Load the dataset splits.
     train_df = pandas.read_csv(os.path.join(dataset_dir, 'gr_reddit_train.csv'), index_col = False)
@@ -107,16 +117,16 @@ def train_evaluate_classifiers(dataset_dir, vectorization_method):
     print(classes)
 
     # Initialize the classifiers.
-    nn = MLPClassifier(solver = 'lbfgs', max_iter = 1000, early_stopping = True)
-    sgd = SGDClassifier(penalty = 'l1', max_iter = 1000, early_stopping = True)
+    mlpc = MLPClassifier(solver = 'lbfgs', max_iter = 1000, early_stopping = True)
+    sgdc = SGDClassifier(penalty = 'l1', max_iter = 1000, early_stopping = True)
     pac = PassiveAggressiveClassifier(loss = 'squared_hinge', max_iter = 1000, early_stopping = True, shuffle = True)
-    gb = GradientBoostingClassifier(criterion = 'squared_error')
+    gbc = GradientBoostingClassifier(criterion = 'squared_error')
     
     evaluation_scores = {}
     # Set the number of threads for parallelization.
     n_jobs = -1 # Use all threads.
     
-    for classifier in [nn, sgd, pac, gb]:
+    for classifier in [mlpc, sgdc, pac, gbc]:
 
         # Get the classifier setup.
         if classifier.__class__.__name__ == 'MLPClassifier':
@@ -155,6 +165,19 @@ def train_evaluate_classifiers(dataset_dir, vectorization_method):
             recall_scores.append(recall)
             f1_scores.append(f1)
             loss_scores.append(h_loss)
+
+            # Calculate the confusion matrix.
+            cf_matrix = confusion_matrix(y_test.argmax(axis = 1), y_pred.argmax(axis = 1))
+
+            # Create a pandas dataframe from the confusion matrix.
+            df = pandas.DataFrame(cf_matrix, index = plot_labels, columns = plot_labels)
+
+            # Plot the dataframe as a heatmap, and save it in a file.
+            fig = plt.figure(figsize = (10, 7))
+            seaborn.heatmap(df, cmap = 'Blues', annot = True, fmt = 'd')
+            plot_path = f'images/cf_{f1}_{classifier.__class__.__name__}_{vectorization_method}.svg'
+            plt.xticks(rotation = 35, ha = 'right')
+            fig.savefig(plot_path, dpi = fig.dpi, format = 'svg', bbox_inches = 'tight')
 
         # Store scores for each classification setup.
         evaluation_scores[classifier_setup] = [

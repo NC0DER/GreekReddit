@@ -1,12 +1,12 @@
 [![Python-Versions](https://img.shields.io/badge/python-3.10-blue.svg)]()
 [![Open in HuggingFace](https://img.shields.io/badge/%F0%9F%A4%97-Open_in_HuggingFace-orange)](https://huggingface.co/IMISLab/)
-[![Software-License](https://img.shields.io/badge/License-Apache--2.0-green)](https://github.com/NC0DER/LMRank/blob/main/LICENSE)
+[![Software-License](https://img.shields.io/badge/License-Apache--2.0-green)](https://github.com/NC0DER/GreekReddit/blob/main/LICENSE)
 
 # GreekReddit
 <img src="Greek Reddit icon.svg" width="200"/>  
 
-This repository hosts code for the upcoming article:
-* [Mastrokostas, C., Giarelis, N., & Karacapilidis, N. (2024). Social Media Topic Classification on Greek Reddit]()
+This repository hosts code for the article:
+* [Mastrokostas, C., Giarelis, N., & Karacapilidis, N. (2024). Social Media Topic Classification on Greek Reddit](https://www.mdpi.com/2078-2489/15/9/521)
 
 
 ## About
@@ -22,7 +22,24 @@ pip install requirements.txt
 
 ## Example Code
 ```python
-TBA
+from transformers import AutoModelForSequenceClassification, AutoTokenizer, pipeline
+
+model_name = 'IMISLab/Greek-Reddit-BERT'
+model = AutoModelForSequenceClassification.from_pretrained(model_name)
+tokenizer = AutoTokenizer.from_pretrained(model_name) 
+
+topic_classifier = pipeline(
+    'text-classification',
+    device = 'cpu',
+    model = model,
+    tokenizer = tokenizer,
+    truncation = True,
+    max_length = 512
+)
+    
+text = 'Άλλες οικονομίες, όπως η Κίνα, προσπαθούν να διατηρούν την αξία του νομίσματος τους χαμηλά ώστε να καταστήσουν τις εξαγωγές τους πιο ελκυστικές στο εξωτερικό. Γιατί όμως θεωρούμε πως η πτωτική πορεία της Τουρκικής λίρας είναι η ""αχίλλειος πτέρνα"" της Τουρκίας;'
+output = topic_classifier(text)
+print(output[0]['label'])
 ```
 
 ## Citation

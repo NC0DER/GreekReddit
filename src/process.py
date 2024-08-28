@@ -145,10 +145,10 @@ def analyze():
     # Draw the boxplots and bar plot.
     plt.boxplot(word_length_lists, showfliers = False)
     plt.xticks([1, 2, 3, 4, 5], labels = labels)
-    plt.savefig('boxplots.svg', format = 'svg', bbox_inches = 'tight')
+    plt.savefig('images/boxplots.svg', format = 'svg', bbox_inches = 'tight')
     plt.clf()
     plt.bar(datasets[0]['category'].value_counts().axes[0], datasets[0]['category'].value_counts().values)
     plt.xticks(rotation = 35, ha = 'right')
-    plt.savefig('class_distribution.svg', format = 'svg', bbox_inches = 'tight')
+    plt.savefig('images/class_distribution.svg', format = 'svg', bbox_inches = 'tight')
 
     return
