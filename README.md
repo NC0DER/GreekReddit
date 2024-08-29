@@ -44,7 +44,16 @@ print(output[0]['label'])
 
 ## Citation
 ```
-TBA
+@article{mastrokostas2024social,
+  title={Social Media Topic Classification on Greek Reddit},
+  author={Mastrokostas, Charalampos and Giarelis, Nikolaos and Karacapilidis, Nikos},
+  journal={Information},
+  volume={15},
+  number={9},
+  pages={521},
+  year={2024},
+  publisher={Multidisciplinary Digital Publishing Institute}
+}
 ```
 
 ## Contributors
